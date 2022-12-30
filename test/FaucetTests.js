@@ -1,4 +1,5 @@
 const { loadFixture } = require('@nomicfoundation/hardhat-network-helpers');
+require('dotenv').config()
 const { expect } = require('chai');
 
 describe('Faucet', function () {
@@ -31,5 +32,13 @@ describe('Faucet', function () {
   it('should destory the faucet contrarct only by the owner', async function () {
     const { faucet, intruder } = await loadFixture(deployContractAndSetVariables);
     await expect(faucet.connect(intruder).destroyFaucet()).to.be.reverted;
+  });
+
+  it('should destory the faucet contrarct when desctruct called by the owner', async function () {
+    const { faucet } = await loadFixture(deployContractAndSetVariables);
+    const provider = ethers.getDefaultProvider(network=5, {
+      alchemy: process.env.ALCHEMY_API_KEY,
+  });
+    expect(await provider.getCode(faucet.address)).to.be.equal("0x");
   });
 });
