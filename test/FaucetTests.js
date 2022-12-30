@@ -41,4 +41,8 @@ describe('Faucet', function () {
   });
     expect(await provider.getCode(faucet.address)).to.be.equal("0x");
   });
+
+  it("should return contract's balance to the owner once self-destructed performed", async function () {
+
+  });
 });
