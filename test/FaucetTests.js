@@ -46,6 +46,46 @@ describe('Faucet', function () {
   });
 
   it("should return contract's balance to the owner once self-destructed performed", async function () {
+    const { faucet } = await loadFixture(deployContractAndSetVariables);
 
+    const balanceBefore = await faucet.provider.getBalance(faucet.address);
+    const tx = await faucet.destroyFaucet();
+    await tx.wait();
+    const balanceAfter = await faucet.provider.getBalance(faucet.address);
+
+    expect(balanceBefore).not.to.be.equal(ethers.utils.parseUnits("0", "ether"))
+    expect(balanceAfter).to.equal(ethers.utils.parseUnits("0", "ether"));
   });
+
+  it("should deposit full contract's balance to owner once self-destructed called", async function () {
+    const { faucet, owner } = await loadFixture(deployContractAndSetVariables);
+
+    const contractBalanceBefore = await faucet.provider.getBalance(faucet.address);
+    const ownerBalanceBefore = await faucet.provider.getBalance(owner.address);
+
+    //Getting the transaction receipt, calculating gasCost
+    const tx = await faucet.destroyFaucet();
+    const txReceipt = await tx.wait();
+    const { gasUsed, effectiveGasPrice } = txReceipt;
+    const gasCost = gasUsed.mul(effectiveGasPrice);
+    console.log("gasCost", ethers.utils.formatEther(gasCost), "ETH");
+
+    const contractBalanceAfter = await faucet.provider.getBalance(faucet.address);
+    const ownerBalanceAfter = await faucet.provider.getBalance(owner.address);
+    
+    //Calculate faucet contrcat balance difference
+    // const contractWithdrawDiff = contractBalanceBefore.toString() - contractBalanceAfter.toString();
+    // console.log("withdraw Difference",contractWithdrawDiff);
+    
+    // const ownerBalanceDiff = -(ownerBalanceBefore.toString() - ownerBalanceAfter.toString());
+    // console.log("owner Difference",ownerBalanceDiff);
+    
+    // const contractBalanceMinusGas = contractBalanceBefore.toString() - gasCost.toString();
+    // console.log("Contract balance minus gas",contractBalanceMinusGas);
+    
+    expect(contractBalanceAfter.toString()).to.equal("0");
+    expect(ownerBalanceAfter.toString() > ownerBalanceBefore.toString()).to.be.true;
+    expect(contractBalanceBefore.add(ownerBalanceBefore).toString()).to.equal(ownerBalanceAfter.add(gasCost).toString());
+  });
+
 });
